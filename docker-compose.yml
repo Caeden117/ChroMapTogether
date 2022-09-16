@@ -1,0 +1,9 @@
+version: '3.6'
+services:
+  chromaptogether:
+    image: ghcr.io/caeden117/chromaptogether:master
+    build: '.'
+    restart: unless-stopped
+    ports:
+    # Port 44345 was the port of the server when running locally. If this is different, please, change it!
+    - "44345:80"
