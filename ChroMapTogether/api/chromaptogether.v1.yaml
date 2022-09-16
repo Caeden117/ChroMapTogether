@@ -1,0 +1,104 @@
+openapi: 3.0.0
+info:
+  title: ChroMapTogether
+  description: |-
+    API specification for ChroMapTogether, a dead-simple matchmaking server for ChroMapper United Mapping.
+    
+    To get around port forwarding, we use a simple server to generate room codes that correlate to a host Port / IP,
+    then use UDP Hole Punching to directly connect clients to the host. This server can be easily implemented in any environment,
+    but the official ChroMapTogether server is written in ASP.NET Core.
+    
+    This API specification is available for users who are interested in how ChroMapTogether works,
+    or if you want to write your own private server for hosting ChroMapper United Mapping sessions.
+    
+    ChroMapper will still retain the ability to directly connect to a host, although the host will need to port forward for
+    direct connections to work.
+  contact:
+    name: Caeden117
+  version: 1.0.0
+paths:
+  /CreateServer:
+    post:
+      summary: 'Creates a new room code for a ChroMapper United Mapping session.'
+      responses:
+        '200':
+          description: |-
+            OK - New United Mapping session using the port and the IP from the HTTP request.
+            
+            The host should now create the ChroMapper United Mapping session with the port that is sent back in the response.
+            This is required for UDP Hole Punching to work.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  guid:
+                    type: string
+                    description: Unique identifier for this session - keep it handy for pinging PUT /KeepServerAlive
+                  port:
+                    type: number
+                    description: Port to host the session on. Important to use this port when hosting the session!
+                  code:
+                    type: string
+                    description: Room code - pass this to friends!
+              examples:
+                Default Response:
+                  value:
+                      guid: "some-very-long-guid"
+                      code: "ABCDE"
+  /JoinServer:
+    get:
+      summary: 'Given a room code, returns host IP and Port.'
+      parameters:
+        - name: code
+          description: Room code which identifies the United Mapping session the user wants to join.
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: false
+                properties:
+                  ip:
+                    type: string
+                    description: Host IP 
+                  port:
+                    type: number
+                    description: Host port
+              examples:
+                Default Response:
+                  value:
+                    ip: '127.0.0.1'
+                    port: 6969
+        '404':
+          description: No server with join code exists.
+  /KeepServerAlive:
+    put:
+      summary: 'Resets the expiry period on a ChroMapper United Mapping room code.'
+      description: |-
+        If ChroMapTogether is being used to host a room code for a ChroMapper United Mapping session,
+        the host is expected to ping this endpoint periodically for the duration of the mapping session.
+        
+        ChroMapTogether room codes will expire after a certain amount of time (1 minute by default).
+        Pinging this endpoint will reset the expiry time.
+      parameters:
+        - name: guid
+          description: Unique GUID which identifies the ChroMapper United Mapping session, from POST /CreateServer
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK - Room code expiry reset.
+        '400':
+          description: Bad request - Guid is malformed.
+        '404':
+          description: Not found - No session found for request port/IP.
