@@ -44,3 +44,6 @@ Ensure that you have the [.NET 5.0 SDK](https://dotnet.microsoft.com/download) i
 
 ## Custom Servers
 To create entirely custom servers, view the API specification in the `ChroMapTogether/api` folder. Good luck!
+
+## Credits
+Massive thanks to [@Goobwabber](https://github.com/Goobwabber) for helping me design ChroMapper United Mapping, and for providing the base to ChroMapTogether. None of this would've happened without her pushing me in the right directions and motivating me to completely pursue multi-player functionality in ChroMapper.
