@@ -12,4 +12,6 @@ RUN dotnet publish -c Release -p:PublishReadyToRun=true -r linux-x64 -o out
 FROM mcr.microsoft.com/dotnet/runtime:5.0
 WORKDIR /app
 COPY --from=build-env /app/out .
+EXPOSE 80/tcp
+EXPOSE 6969/udp
 ENTRYPOINT ["dotnet", "/app/ChroMapTogether.dll"]
