@@ -348,7 +348,9 @@ healthchecksdb
 # Backup folder for Package Reference Convert tool in Visual Studio 2017
 MigrationBackup/
 
-
+# Azure publish/service dependencies
+**/Properties/PublishProfiles/
+**/Properties/ServiceDependencies/
 
 
 *.sqlite

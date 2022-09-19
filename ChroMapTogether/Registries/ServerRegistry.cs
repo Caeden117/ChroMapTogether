@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Timers;
 
 namespace ChroMapTogether.Registries
@@ -38,9 +39,19 @@ namespace ChroMapTogether.Registries
             logger.Information("New server created.");
         }
 
+        public void DeleteServer(ChroMapServer server)
+        {
+            servers.Remove(server);
+
+            logger.Information("Server explicitly removed.");
+        }
+
         public ChroMapServer? GetServer(string code) => servers.Find(x => x.code == code);
 
         public ChroMapServer? GetServer(Guid guid) => servers.Find(x => x.guid == guid);
+
+        public ChroMapServer? GetServer(IPEndPoint hostAddress)
+            => servers.Find(x => x.ip == hostAddress.Address.ToString() && x.port == hostAddress.Port);
 
         private void CheckForExpiredServers(object sender, ElapsedEventArgs e)
         {
