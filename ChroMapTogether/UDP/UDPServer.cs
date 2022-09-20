@@ -26,9 +26,9 @@ namespace ChroMapTogether.UDP
             NetDebug.Logger = this;
 
             netManager = new NetManager(eventBasedNetListener);
-            netManager.Start(6969);
+            netManager.StartInManualMode(6969);
 
-            timer = new Timer((1 / 60d) * 1000);
+            timer = new Timer(1 / 60d * 1000);
             timer.AutoReset = true;
             timer.Elapsed += Timer_Elapsed;
             timer.Start();
@@ -38,7 +38,11 @@ namespace ChroMapTogether.UDP
 
         public void Dispose() => netManager.DisconnectAll();
 
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e) => netManager?.PollEvents();
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            netManager?.ManualReceive();
+            netManager?.ManualUpdate((int)timer.Interval);
+        }
 
         private void EventBasedNetListener_ConnectionRequestEvent(ConnectionRequest request)
         {
