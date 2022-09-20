@@ -50,20 +50,14 @@ namespace ChroMapTogether.UDP
 
             if (request.Data.TryGetString(out var serverGuid) && Guid.TryParse(serverGuid, out var guid))
             {
-                var server = serverRegistry.GetServer(guid);
+                var session = serverRegistry.GetServer(guid);
 
-                if (server != null)
+                if (session != null)
                 {
-                    server.ip = request.RemoteEndPoint.Address.ToString();
-                    server.port = request.RemoteEndPoint.Port;
+                    session.ip = request.RemoteEndPoint.Address.ToString();
+                    session.port = request.RemoteEndPoint.Port;
 
-                    var peer = request.Accept();
-
-                    var netDataWriter = new NetDataWriter();
-                    netDataWriter.Put(server.port);
-
-                    peer.Send(netDataWriter, DeliveryMethod.ReliableOrdered);
-
+                    request.Accept();
                     logger.Information("Successfully established UDP connection with a host.");
                     return;
                 }
