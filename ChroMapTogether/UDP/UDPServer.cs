@@ -52,21 +52,14 @@ namespace ChroMapTogether.UDP
                     server.ip = request.RemoteEndPoint.Address.ToString();
                     server.port = request.RemoteEndPoint.Port;
 
-                    logger.Information("Successfully established UDP connection with a host.");
-
                     var peer = request.Accept();
-
-                    logger.Information("RREP Address:" + request.RemoteEndPoint.Address.ToString());
-                    logger.Information("RREP Port:" + request.RemoteEndPoint.Port.ToString());
-                    logger.Information("Peer Address:" + peer.EndPoint.Address.ToString());
-                    logger.Information("Peer Port:" + peer.EndPoint.Port.ToString());
 
                     var netDataWriter = new NetDataWriter();
                     netDataWriter.Put(server.port);
 
                     peer.Send(netDataWriter, DeliveryMethod.ReliableOrdered);
 
-                    logger.Information("Sent message back to host.");
+                    logger.Information("Successfully established UDP connection with a host.");
                     return;
                 }
             }
@@ -82,7 +75,7 @@ namespace ChroMapTogether.UDP
 
             if (server != null)
             {
-                logger.Information("UDP connection for host lost; deleting hosted session...");
+                logger.Information($"UDP connection for host lost ({disconnectInfo}); deleting hosted session...");
                 serverRegistry.DeleteServer(server);
             }
         }
