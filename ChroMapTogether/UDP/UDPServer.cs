@@ -56,14 +56,6 @@ namespace ChroMapTogether.UDP
                 {
                     var peer = request.Accept();
 
-                    logger.Information($"RREP Address: {request.RemoteEndPoint.Address}");
-                    logger.Information($"RREP Port: {request.RemoteEndPoint.Port}");
-                    logger.Information($"Peer Address: {peer.EndPoint.Address}");
-                    logger.Information($"Peer Port: {peer.EndPoint.Port}");
-
-                    session.ip = peer.EndPoint.Address.ToString();
-                    session.port = peer.EndPoint.Port;
-
                     logger.Information("Successfully established UDP connection with a host.");
                     return;
                 }

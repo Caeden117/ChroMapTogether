@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using Serilog;
 using Serilog.Exceptions.Core;
 using ChroMapTogether.UDP;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace ChroMapTogether
 {
@@ -48,6 +49,10 @@ namespace ChroMapTogether
                                 .UseHttpsRedirection()
                                 .UseRouting()
                                 .UseEndpoints(endPointRouteBuilder => endPointRouteBuilder.MapControllers())
+                                .UseForwardedHeaders(new()
+                                {
+                                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+                                })
                         )
                 )
                 .UseSerilog((host, services, logger) => logger
