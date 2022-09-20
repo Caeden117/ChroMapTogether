@@ -32,8 +32,8 @@ namespace ChroMapTogether.Controllers
             var server = new ChroMapServer
             {
                 guid = Guid.NewGuid(),
-                ip = HttpContext.Connection.RemoteIpAddress!.ToString(),
-                port = HttpContext.Connection.RemotePort,
+                ip = "127.0.0.1",
+                port = 6969,
                 code = codeProvider.Generate(config.Value.RoomCodeLength)
             };
 
