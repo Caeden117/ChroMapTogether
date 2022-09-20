@@ -36,7 +36,7 @@ namespace ChroMapTogether.Registries
             servers.RemoveAll(x => x.ip == server.ip && x.port == server.port);
             servers.Add(server);
 
-            logger.Information("New server created.");
+            logger.Information($"New server created at {server.ip}:{server.port}.");
         }
 
         public void DeleteServer(ChroMapServer server)
