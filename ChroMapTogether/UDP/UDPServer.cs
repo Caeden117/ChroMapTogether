@@ -54,7 +54,7 @@ namespace ChroMapTogether.UDP
 
                 if (session != null)
                 {
-                    var peer = request.Accept();
+                    request.Accept();
 
                     logger.Information("Successfully established UDP connection with a host.");
                     return;
