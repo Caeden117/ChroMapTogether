@@ -75,7 +75,7 @@ namespace ChroMapTogether.UDP
 
             if (server != null)
             {
-                logger.Information($"UDP connection for host lost ({disconnectInfo}); deleting hosted session...");
+                logger.Information($"UDP connection for host lost ({disconnectInfo.Reason}, {disconnectInfo.SocketErrorCode}); deleting hosted session...");
                 serverRegistry.DeleteServer(server);
             }
         }
