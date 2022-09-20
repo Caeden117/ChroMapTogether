@@ -56,6 +56,11 @@ namespace ChroMapTogether.UDP
 
                     var peer = request.Accept();
 
+                    logger.Information("RREP Address:" + request.RemoteEndPoint.Address.ToString());
+                    logger.Information("RREP Port:" + request.RemoteEndPoint.Port.ToString());
+                    logger.Information("Peer Address:" + peer.EndPoint.Address.ToString());
+                    logger.Information("Peer Port:" + peer.EndPoint.Port.ToString());
+
                     var netDataWriter = new NetDataWriter();
                     netDataWriter.Put(server.port);
 
