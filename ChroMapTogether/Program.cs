@@ -44,16 +44,21 @@ namespace ChroMapTogether
                                     options.Filters.Add(new HttpResponseExceptionFilter())
                                 )
                         )
-                        .Configure(applicationBuilder =>
+                        .Configure(applicationBuilder => {
+                            var forwardedHeadersOptions = new ForwardedHeadersOptions()
+                            {
+                                ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+                            };
+
+                            forwardedHeadersOptions.KnownNetworks.Clear();
+                            forwardedHeadersOptions.KnownProxies.Clear();
+
                             applicationBuilder
                                 .UseHttpsRedirection()
+                                .UseForwardedHeaders(forwardedHeadersOptions)
                                 .UseRouting()
-                                .UseEndpoints(endPointRouteBuilder => endPointRouteBuilder.MapControllers())
-                                .UseForwardedHeaders(new()
-                                {
-                                    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-                                })
-                        )
+                                .UseEndpoints(endPointRouteBuilder => endPointRouteBuilder.MapControllers());
+                        })
                 )
                 .UseSerilog((host, services, logger) => logger
                     .ReadFrom.Configuration(host.Configuration)    
