@@ -61,6 +61,7 @@ namespace ChroMapTogether.UDP
 
                     peer.Send(netDataWriter, DeliveryMethod.ReliableOrdered);
 
+                    logger.Information("Sent message back to host.");
                     return;
                 }
             }
