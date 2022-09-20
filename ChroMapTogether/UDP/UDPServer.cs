@@ -7,7 +7,7 @@ using System.Timers;
 
 namespace ChroMapTogether.UDP
 {
-    public sealed class UDPServer : IDisposable
+    public sealed class UDPServer : IDisposable, INetLogger
     {
         private readonly NetManager netManager;
         private readonly EventBasedNetListener eventBasedNetListener;
@@ -22,7 +22,8 @@ namespace ChroMapTogether.UDP
 
             eventBasedNetListener = new EventBasedNetListener();
             eventBasedNetListener.ConnectionRequestEvent += EventBasedNetListener_ConnectionRequestEvent;
-            eventBasedNetListener.PeerDisconnectedEvent += EventBasedNetListener_PeerDisconnectedEvent;
+
+            NetDebug.Logger = this;
 
             netManager = new NetManager(eventBasedNetListener);
             netManager.Start(6969);
@@ -69,15 +70,9 @@ namespace ChroMapTogether.UDP
             request.Reject();
         }
 
-        private void EventBasedNetListener_PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
+        public void WriteNet(NetLogLevel level, string str, params object[] args)
         {
-            var server = serverRegistry.GetServer(peer.EndPoint);
-
-            if (server != null)
-            {
-                logger.Information($"UDP connection for host lost ({disconnectInfo.Reason}, {disconnectInfo.SocketErrorCode}); deleting hosted session...");
-                serverRegistry.DeleteServer(server);
-            }
+            logger.Information(str, args);
         }
     }
 }
