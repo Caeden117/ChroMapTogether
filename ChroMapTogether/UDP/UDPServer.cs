@@ -91,6 +91,10 @@ namespace ChroMapTogether.UDP
 
             if (hosts.TryGetValue(roomCode, out var host))
             {
+                logger.Information("Pairing {0}:{1} with host {2}:{3}...",
+                    remoteEndPoint.Address.MapToIPv4().ToString(), remoteEndPoint.Port,
+                    host.ExternalAddr.Address.MapToIPv4().ToString(), host.ExternalAddr.Port);
+
                 netManager.NatPunchModule.NatIntroduce(
                     host.InternalAddr, host.ExternalAddr, localEndPoint, remoteEndPoint, roomCode);
             }
@@ -98,6 +102,8 @@ namespace ChroMapTogether.UDP
             {
                 server.ip = remoteEndPoint.Address.MapToIPv4().ToString();
                 server.port = remoteEndPoint.Port;
+                logger.Information("Assigning host connection for UDP hole punching ({0}:{1})...",
+                    server.port, server.ip);
                 hosts[roomCode] = new(localEndPoint, remoteEndPoint, roomCode);
             }
         }
