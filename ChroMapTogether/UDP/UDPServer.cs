@@ -104,7 +104,7 @@ namespace ChroMapTogether.UDP
                 server.ip = remoteEndPoint.Address.MapToIPv4().ToString();
                 server.port = remoteEndPoint.Port;
                 logger.Information("Assigning host connection for UDP hole punching ({0}:{1})...",
-                    server.port, server.ip);
+                    server.ip, server.port);
                 hosts[roomCode] = new(localEndPoint, remoteEndPoint, roomCode);
             }
         }
