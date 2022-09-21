@@ -51,6 +51,7 @@ namespace ChroMapTogether.UDP
         {
             netManager?.ManualReceive();
             netManager?.ManualUpdate((int)timer.Interval);
+            netManager?.NatPunchModule.PollEvents();
         }
 
         private void EventBasedNetListener_ConnectionRequestEvent(ConnectionRequest request)
