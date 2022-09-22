@@ -136,6 +136,7 @@ namespace ChroMapTogether.UDP
                     {
                         if (otherPeer != peer && peersNeedingMaps.Remove(otherPeer))
                         {
+                            logger.Information("Sending map zip to peer...");
                             SendPacketFrom(identity, otherPeer, packetBytes);
                         }
                     }
@@ -184,7 +185,7 @@ namespace ChroMapTogether.UDP
                     
                         foreach (var otherPeer in otherPeers)
                         {
-                            peer.Disconnect();
+                            otherPeer.Disconnect();
                         }
 
                         roomCodeToSession.Remove(roomCode);
