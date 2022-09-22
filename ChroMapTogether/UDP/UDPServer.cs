@@ -175,10 +175,24 @@ namespace ChroMapTogether.UDP
 
             if (peerToRoomCode.TryGetValue(peer, out var roomCode))
             {
-                if (roomCodeToSession.TryGetValue(roomCode, out var otherPeers)
-                    && otherPeers.Remove(peer) && otherPeers.Count == 0)
+                if (roomCodeToSession.TryGetValue(roomCode, out var otherPeers))
                 {
-                    roomCodeToSession.Remove(roomCode);
+                    // If the host is disconnected, kick everyone out
+                    if (otherPeers.IndexOf(peer) == 0)
+                    {
+                        roomCodeToSession.Remove(roomCode);
+                    
+                        foreach (var otherPeer in otherPeers)
+                        {
+                            peer.Disconnect();
+                        }
+
+                        roomCodeToSession.Remove(roomCode);
+                    }
+                    else
+                    {
+                        otherPeers.Remove(peer);
+                    }
                 }
 
                 peerToRoomCode.Remove(peer);
