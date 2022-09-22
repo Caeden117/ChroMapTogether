@@ -190,6 +190,14 @@ namespace ChroMapTogether.UDP
                     else
                     {
                         otherPeers.Remove(peer);
+
+                        if (cachedIdentities.TryGetValue(peer, out var identity))
+                        {
+                            foreach (var otherPeer in otherPeers)
+                            {
+                                SendPacketFrom(identity, otherPeer, PacketId.MapperDisconnect);
+                            }
+                        }
                     }
                 }
 
@@ -215,6 +223,16 @@ namespace ChroMapTogether.UDP
 
         public void WriteNet(NetLogLevel level, string str, params object[] args) => logger.Information(str, args);
         
+        public void SendPacketFrom(MapperIdentityPacket fromPeer, NetPeer toPeer, PacketId packetId)
+        {
+            var writer = new NetDataWriter();
+
+            writer.Put(fromPeer.ConnectionId);
+            writer.Put((byte)packetId);
+
+            toPeer.Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
         public void SendPacketFrom(MapperIdentityPacket fromPeer, NetPeer toPeer, PacketId packetId, INetSerializable data)
         {
             var writer = new NetDataWriter();
