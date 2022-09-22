@@ -119,7 +119,7 @@ namespace ChroMapTogether.UDP
                 && roomCodeToSession.TryGetValue(roomCode, out var otherPeers))
             {
                 // Bogus identity from the client
-                var _ = reader.GetByte();
+                var _ = reader.GetInt();
 
                 // We need to correct identity with the connection ID from the peer
                 var identity = cachedIdentities[peer];

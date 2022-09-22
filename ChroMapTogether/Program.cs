@@ -57,6 +57,7 @@ namespace ChroMapTogether
                                 .UseHttpsRedirection()
                                 .UseForwardedHeaders(forwardedHeadersOptions)
                                 .UseRouting()
+                                .UseSerilogRequestLogging()
                                 .UseEndpoints(endPointRouteBuilder => endPointRouteBuilder.MapControllers());
                         })
                 )
