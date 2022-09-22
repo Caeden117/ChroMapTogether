@@ -132,6 +132,7 @@ namespace ChroMapTogether.UDP
                 if (packetId == (byte)PacketId.SendZip)
                 {
                     // Only forward zip packet to peers who need it
+                    logger.Information("Sending map zip to peers...");
                     foreach (var otherPeer in otherPeers)
                     {
                         if (otherPeer != peer && peersNeedingMaps.Remove(otherPeer))
