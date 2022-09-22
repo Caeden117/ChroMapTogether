@@ -19,6 +19,7 @@ namespace ChroMapTogether.UDP
         private readonly ILogger logger;
         private readonly ServerRegistry serverRegistry;
         private readonly IOptions<ServerConfiguration> serverConfig;
+        private readonly Timer timer;
 
         private readonly Dictionary<string, List<NetPeer>> roomCodeToSession = new();
         private readonly Dictionary<NetPeer, string> peerToRoomCode = new();
@@ -43,10 +44,17 @@ namespace ChroMapTogether.UDP
             netManager = new NetManager(eventBasedNetListener);
             netManager.Start(6969);
 
+            timer = new Timer(1 / 60d * 1000);
+            timer.AutoReset = true;
+            timer.Elapsed += Timer_Elapsed;
+            timer.Start();
+
             logger.Information("UDP server started.");
         }
 
         public void Dispose() => netManager.DisconnectAll();
+
+        private void Timer_Elapsed(object sender, ElapsedEventArgs e) => netManager.PollEvents();
 
         private void EventBasedNetListener_ConnectionRequestEvent(ConnectionRequest request)
         {
