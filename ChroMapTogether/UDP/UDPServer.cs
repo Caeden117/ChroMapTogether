@@ -101,6 +101,7 @@ namespace ChroMapTogether.UDP
 
                     peers.Add(peer);
                     peerToRoomCode.Add(peer, roomCode);
+                    cachedIdentities.Add(peer, identity);
 
                     logger.Information("Successfully established UDP connection.");
                     return;
@@ -187,15 +188,14 @@ namespace ChroMapTogether.UDP
         private void EventBasedNetListener_NetworkLatencyUpdateEvent(NetPeer peer, int latency)
         {
             if (peerToRoomCode.TryGetValue(peer, out var roomCode)
-                && roomCodeToSession.TryGetValue(roomCode, out var otherPeers))
+                && roomCodeToSession.TryGetValue(roomCode, out var otherPeers)
+                && cachedIdentities.TryGetValue(peer, out var identity))
             {
-                var identity = cachedIdentities[peer];
-
                 foreach (var otherPeer in otherPeers)
                 {
                     if (otherPeer != peer)
                     {
-                        SendPacketFrom(identity, otherPeer, PacketId.MapperLatency, new MapperLatencyPacket());
+                        SendPacketFrom(identity, otherPeer, PacketId.MapperLatency, new MapperLatencyPacket(latency));
                     }
                 }
             }
