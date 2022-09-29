@@ -2,7 +2,7 @@
 
 namespace ChroMapTogether.Models.Responses
 {
-    public class CreateServerResponse
+    public class CreateSessionResponse
     {
         public Guid guid { get; set; }
         public string ip { get; set; } = string.Empty;

@@ -18,16 +18,16 @@ namespace ChroMapTogether.UDP
         private readonly NetManager netManager;
         private readonly EventBasedNetListener eventBasedNetListener;
         private readonly ILogger logger;
-        private readonly ServerRegistry serverRegistry;
+        private readonly SessionRegistry sessionRegistry;
         private readonly IOptions<ServerConfiguration> serverConfig;
         private readonly Timer timer;
 
-        private readonly Dictionary<NetPeer, ChroMapServer> connectedSessions = new();
+        private readonly Dictionary<NetPeer, Session> connectedSessions = new();
 
-        public UDPServer(ILogger logger, ServerRegistry serverRegistry, IOptions<ServerConfiguration> serverConfig)
+        public UDPServer(ILogger logger, SessionRegistry sessionRegistry, IOptions<ServerConfiguration> serverConfig)
         {
             this.logger = logger.ForContext<UDPServer>();
-            this.serverRegistry = serverRegistry;
+            this.sessionRegistry = sessionRegistry;
             this.serverConfig = serverConfig;
 
             eventBasedNetListener = new();
@@ -59,7 +59,7 @@ namespace ChroMapTogether.UDP
 
             if (request.Data.TryGetString(out var roomCode)
                 && roomCode.Length == serverConfig.Value.RoomCodeLength
-                && serverRegistry.TryGetServer(roomCode, out var session))
+                && sessionRegistry.TryGetSession(roomCode, out var session))
             {
                 var peer = request.Accept();
 
@@ -195,7 +195,7 @@ namespace ChroMapTogether.UDP
                 // If the host is disconnected, kick everyone out
                 if (session.Host == peer)
                 {
-                    serverRegistry.DeleteServer(session);
+                    sessionRegistry.DeleteSession(session);
                 }
                 else if (session.ConnectedClients.Remove(peer))
                 {

@@ -14,14 +14,14 @@ namespace ChroMapTogether.Controllers
     [Route("[controller]")]
     public class CreateServerController : ControllerBase
     {
-        private readonly ServerRegistry serverRegistry;
-        private readonly ServerCodeProvider codeProvider;
+        private readonly SessionRegistry sessionRegistry;
+        private readonly SessionCodeProvider codeProvider;
         private readonly IOptions<ServerConfiguration> config;
 
-        public CreateServerController(ServerRegistry serverRegistry, ServerCodeProvider codeProvider,
+        public CreateServerController(SessionRegistry sessionRegistry, SessionCodeProvider codeProvider,
             IOptions<ServerConfiguration> config)
         {
-            this.serverRegistry = serverRegistry;
+            this.sessionRegistry = sessionRegistry;
             this.codeProvider = codeProvider;
             this.config = config;
         }
@@ -29,7 +29,7 @@ namespace ChroMapTogether.Controllers
         [HttpPost]
         public ActionResult Post()
         {
-            var server = new ChroMapServer
+            var session = new Session
             {
                 Guid = Guid.NewGuid(),
                 Ip = Request.HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString(),
@@ -37,13 +37,13 @@ namespace ChroMapTogether.Controllers
                 Code = codeProvider.Generate(config.Value.RoomCodeLength)
             };
 
-            serverRegistry.AddServer(server);
+            sessionRegistry.AddSession(session);
 
-            return Ok(new CreateServerResponse
+            return Ok(new CreateSessionResponse
             {
-                guid = server.Guid,
-                port = server.Port,
-                code = server.Code
+                guid = session.Guid,
+                port = session.Port,
+                code = session.Code
             });
         }
     }

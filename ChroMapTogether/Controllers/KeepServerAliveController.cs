@@ -10,27 +10,27 @@ namespace ChroMapTogether.Controllers
     [Route("[controller]")]
     public class KeepServerAliveController : ControllerBase
     {
-        private readonly ServerRegistry serverRegistry;
+        private readonly SessionRegistry sessionRegistry;
         private readonly IOptions<ServerConfiguration> config;
 
-        public KeepServerAliveController(ServerRegistry serverRegistry, IOptions<ServerConfiguration> config)
+        public KeepServerAliveController(SessionRegistry sessionRegistry, IOptions<ServerConfiguration> config)
         {
-            this.serverRegistry = serverRegistry;
+            this.sessionRegistry = sessionRegistry;
             this.config = config;
         }
 
         [HttpPut]
         public ActionResult Put(string guid)
         {
-            if (!Guid.TryParse(guid, out var serverGuid))
+            if (!Guid.TryParse(guid, out var sessionGuid))
                 return BadRequest();
 
-            var server = serverRegistry.GetServer(serverGuid);
+            var session = sessionRegistry.GetSession(sessionGuid);
 
-            if (server is null)
+            if (session is null)
                 return NotFound();
 
-            server.Expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
+            session.Expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
 
             return Ok();
         }

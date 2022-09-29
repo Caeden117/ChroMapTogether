@@ -8,19 +8,19 @@ namespace ChroMapTogether.Controllers
     [Route("[controller]")]
     public class JoinServerController : ControllerBase
     {
-        private readonly ServerRegistry serverRegistry;
+        private readonly SessionRegistry sessionRegistry;
 
-        public JoinServerController(ServerRegistry serverRegistry)
-            => this.serverRegistry = serverRegistry;
+        public JoinServerController(SessionRegistry sessionRegistry)
+            => this.sessionRegistry = sessionRegistry;
 
         [HttpGet]
         public ActionResult Get(string code)
         {
-            var server = serverRegistry.GetServer(code);
+            var server = sessionRegistry.GetSession(code);
 
             return server is null
                 ? NotFound()
-                : Ok(new JoinServerResponse
+                : Ok(new JoinSessionResponse
                 {
                     ip = server.Ip,
                     port = server.Port

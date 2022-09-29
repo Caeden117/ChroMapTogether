@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 namespace ChroMapTogether.Models
 {
-    public class ChroMapServer
+    public class Session
     {
         public Guid Guid { get; set; }
         public string Ip { get; set; } = string.Empty;

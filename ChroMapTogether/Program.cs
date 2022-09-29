@@ -36,8 +36,8 @@ namespace ChroMapTogether
                             services
                                 .AddOptions()
                                 .AddConfiguration<ServerConfiguration>("ChroMapTogether")
-                                .AddSingleton<ServerRegistry>()
-                                .AddSingleton<ServerCodeProvider>()
+                                .AddSingleton<SessionRegistry>()
+                                .AddSingleton<SessionCodeProvider>()
                                 .AddTransient<RNGCryptoServiceProvider>()
                                 .AddSingleton<UDPServer>()
                                 .AddControllers(options =>

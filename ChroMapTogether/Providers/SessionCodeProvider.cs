@@ -2,13 +2,13 @@
 
 namespace ChroMapTogether.Providers
 {
-    public class ServerCodeProvider
+    public class SessionCodeProvider
     {
         private static readonly string _alphanumeric = "ABCDEFGHJKLMNPQRSTUVWXYZ012345789";
 
         private readonly RNGCryptoServiceProvider _rngCryptoServiceProvider;
 
-        public ServerCodeProvider(RNGCryptoServiceProvider rngCryptoServiceProvider)
+        public SessionCodeProvider(RNGCryptoServiceProvider rngCryptoServiceProvider)
         {
             _rngCryptoServiceProvider = rngCryptoServiceProvider;
         }
