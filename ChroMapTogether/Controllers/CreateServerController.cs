@@ -31,19 +31,19 @@ namespace ChroMapTogether.Controllers
         {
             var server = new ChroMapServer
             {
-                guid = Guid.NewGuid(),
-                ip = Request.HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString(),
-                port = 6969,
-                code = codeProvider.Generate(config.Value.RoomCodeLength)
+                Guid = Guid.NewGuid(),
+                Ip = Request.HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString(),
+                Port = 6969,
+                Code = codeProvider.Generate(config.Value.RoomCodeLength)
             };
 
             serverRegistry.AddServer(server);
 
             return Ok(new CreateServerResponse
             {
-                guid = server.guid,
-                port = server.port,
-                code = server.code
+                guid = server.Guid,
+                port = server.Port,
+                code = server.Code
             });
         }
     }

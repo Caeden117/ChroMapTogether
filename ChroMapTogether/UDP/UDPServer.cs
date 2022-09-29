@@ -1,4 +1,5 @@
 ﻿using ChroMapTogether.Configuration;
+using ChroMapTogether.Models;
 using ChroMapTogether.Registries;
 using ChroMapTogether.UDP.Packets;
 using LiteNetLib;
@@ -21,11 +22,7 @@ namespace ChroMapTogether.UDP
         private readonly IOptions<ServerConfiguration> serverConfig;
         private readonly Timer timer;
 
-        private readonly Dictionary<string, List<NetPeer>> roomCodeToSession = new();
-        private readonly Dictionary<NetPeer, string> peerToRoomCode = new();
-        private readonly Dictionary<NetPeer, MapperIdentityPacket> cachedIdentities = new();
-        private readonly Dictionary<NetPeer, MapperPosePacket> cachedPoses = new();
-        private readonly List<NetPeer> peersNeedingMaps = new();
+        private readonly Dictionary<NetPeer, ChroMapServer> connectedSessions = new();
 
         public UDPServer(ILogger logger, ServerRegistry serverRegistry, IOptions<ServerConfiguration> serverConfig)
         {
@@ -60,48 +57,47 @@ namespace ChroMapTogether.UDP
         {
             logger.Information("Got an incoming UDP connection");
 
-            if (request.Data.TryGetString(out var roomCode) && roomCode.Length == serverConfig.Value.RoomCodeLength)
+            if (request.Data.TryGetString(out var roomCode)
+                && roomCode.Length == serverConfig.Value.RoomCodeLength
+                && serverRegistry.TryGetServer(roomCode, out var session))
             {
-                var session = serverRegistry.GetServer(roomCode);
-                
-                if (session != null)
+                var peer = request.Accept();
+
+                session.Host ??= peer;
+
+                var identity = request.Data.Get<MapperIdentityPacket>();
+                identity.ConnectionId = session.ConnectedClients.Count;
+                identity.MapperPeer = peer;
+
+                // Send peer identities and poses to new user
+                foreach (var otherPeer in session.ConnectedClients)
                 {
-                    var peer = request.Accept();
+                    SendPacketFrom(identity, otherPeer, PacketId.MapperIdentity, identity);
 
-                    if (!roomCodeToSession.TryGetValue(roomCode, out var peers))
+                    var otherPeerIdentity = session.Identities.Find(it => it.MapperPeer == otherPeer);
+
+                    if (otherPeerIdentity != null)
                     {
-                        peers = new();
-                        roomCodeToSession.Add(roomCode, peers);
-                    }
-                    else
-                    {
-                        peersNeedingMaps.Add(peer);
-                    }
-
-                    var identity = request.Data.Get<MapperIdentityPacket>();
-                    identity.ConnectionId = peers.Count;
-
-                    // Send peer identities and poses to new user
-                    foreach (var otherPeer in peers)
-                    {
-                        SendPacketFrom(identity, otherPeer, PacketId.MapperIdentity, identity);
-
-                        var otherPeerIdentity = cachedIdentities[otherPeer];
                         SendPacketFrom(otherPeerIdentity, peer, PacketId.MapperIdentity, otherPeerIdentity);
 
-                        if (cachedPoses.TryGetValue(otherPeer, out var lastKnownPose))
+                        if (session.CachedPoses.TryGetValue(otherPeer, out var lastKnownPose))
                         {
                             SendPacketFrom(otherPeerIdentity, peer, PacketId.MapperPose, lastKnownPose);
                         }
                     }
-
-                    peers.Add(peer);
-                    peerToRoomCode.Add(peer, roomCode);
-                    cachedIdentities.Add(peer, identity);
-
-                    logger.Information("Successfully established UDP connection.");
-                    return;
                 }
+
+                if (session.Host != peer)
+                {
+                    SendPacketFrom(identity, session.Host, PacketId.CMT_IncomingMapper, new IncomingMapperPacket(peer.EndPoint.Address));
+                }
+
+                session.ConnectedClients.Add(peer);
+                session.Identities.Add(identity);
+                connectedSessions.Add(peer, session);
+
+                logger.Information("Successfully established UDP connection.");
+                return;
             }
 
             logger.Warning("UDP connection not related to a server; killing connection request...");
@@ -111,37 +107,77 @@ namespace ChroMapTogether.UDP
 
         private void EventBasedNetListener_NetworkReceiveEvent(NetPeer peer, NetPacketReader reader, DeliveryMethod deliveryMethod)
         {
-            if (peerToRoomCode.TryGetValue(peer, out var roomCode)
-                && roomCodeToSession.TryGetValue(roomCode, out var otherPeers))
+            if (connectedSessions.TryGetValue(peer, out var session))
             {
                 // Bogus identity from the client
                 var _ = reader.GetInt();
 
                 // We need to correct identity with the connection ID from the peer
-                var identity = cachedIdentities[peer];
+                var identity = session.Identities.Find(it => it.MapperPeer == peer);
 
-                var packetBytes = new byte[reader.AvailableBytes];
-                Array.Copy(reader.RawData, reader.Position, packetBytes, 0, reader.AvailableBytes);
-
-                var packetId = reader.GetByte();
-
-                if (packetId == (byte)PacketId.SendZip)
+                if (identity != null)
                 {
-                    // Only forward zip packet to peers who need it
-                    logger.Information("Sending map zip to peers...");
-                    foreach (var otherPeer in otherPeers)
+                    var packetBytes = new byte[reader.AvailableBytes];
+                    Array.Copy(reader.RawData, reader.Position, packetBytes, 0, reader.AvailableBytes);
+
+                    var packetId = reader.GetByte();
+
+                    if (packetId == (byte)PacketId.SendZip)
                     {
-                        if (otherPeer != peer && peersNeedingMaps.Remove(otherPeer))
+                        // Only forward zip packet to peers who need it
+                        foreach (var otherPeer in session.ClientsWaitingForMap)
                         {
-                            logger.Information("Sending map zip to peer...");
                             SendPacketFrom(identity, otherPeer, packetBytes);
                         }
+
+                        session.ClientsWaitingForMap.Clear();
+                        return;
                     }
-                }
-                else
-                {
+                    // Cache pose in case new mappers connect
+                    else if (packetId == (byte)PacketId.MapperPose)
+                    {
+                        session.CachedPoses[peer] = reader.Get<MapperPosePacket>();
+                    }
+                    // Kick user (only if host)
+                    else if (packetId == (byte)PacketId.CMT_KickMapper && session.Host == peer)
+                    {
+                        var offendingId = reader.GetInt();
+                        var offendingIdentity = session.Identities.Find(it => it.ConnectionId == offendingId);
+
+                        if (offendingIdentity != null && offendingIdentity.MapperPeer != null)
+                        {
+                            if (reader.TryGetString(out var reason))
+                            {
+                                session.KickUser(offendingIdentity.MapperPeer, reason);
+                            }
+                            else
+                            {
+                                session.KickUser(offendingIdentity.MapperPeer, "Kicked by the host.");
+                            }
+                        }
+                        return;
+                    }
+                    // Accept user (only if host)
+                    else if (packetId == (byte)PacketId.CMT_AcceptMapper && session.Host == peer)
+                    {
+                        var acceptingId = reader.GetInt();
+                        var acceptingIdentity = session.Identities.Find(it => it.ConnectionId == acceptingId);
+
+                        if (acceptingIdentity != null && acceptingIdentity.MapperPeer != null)
+                        {
+                            // Request a zip file from the map host if the waitlist is empty.
+                            if (session.ClientsWaitingForMap.Count == 0)
+                            {
+                                SendPacketTo(session.Host, PacketId.CMT_RequestZip);
+                            }
+
+                            session.ClientsWaitingForMap.Add(acceptingIdentity.MapperPeer);
+                        }
+                        return;
+                    }
+
                     // Forward packet to other clients
-                    foreach (var otherPeer in otherPeers)
+                    foreach (var otherPeer in session.ConnectedClients)
                     {
                         if (otherPeer != peer)
                         {
@@ -149,73 +185,54 @@ namespace ChroMapTogether.UDP
                         }
                     }
                 }
-
-                // Cache certain packets in case new client connects
-                switch (packetId)
-                {
-                    case (byte)PacketId.MapperIdentity:
-                        cachedIdentities[peer] = reader.Get<MapperIdentityPacket>();
-                        break;
-
-                    case (byte)PacketId.MapperPose:
-                        cachedPoses[peer] = reader.Get<MapperPosePacket>();
-                        break;
-                }
             }
         }
 
         private void EventBasedNetListener_PeerDisconnectedEvent(NetPeer peer, DisconnectInfo disconnectInfo)
         {
-            peerToRoomCode.Remove(peer);
-            cachedIdentities.Remove(peer);
-            cachedPoses.Remove(peer);
-            peersNeedingMaps.Remove(peer);
-
-            if (peerToRoomCode.TryGetValue(peer, out var roomCode))
+            if (connectedSessions.TryGetValue(peer, out var session))
             {
-                if (roomCodeToSession.TryGetValue(roomCode, out var otherPeers))
+                // If the host is disconnected, kick everyone out
+                if (session.Host == peer)
                 {
-                    // If the host is disconnected, kick everyone out
-                    if (otherPeers.IndexOf(peer) == 0)
-                    {
-                        roomCodeToSession.Remove(roomCode);
-                    
-                        foreach (var otherPeer in otherPeers)
-                        {
-                            otherPeer.Disconnect();
-                        }
+                    serverRegistry.DeleteServer(session);
+                }
+                else if (session.ConnectedClients.Remove(peer))
+                {
+                    var identity = session.Identities.Find(it => it.MapperPeer == peer);
 
-                        roomCodeToSession.Remove(roomCode);
-                    }
-                    else
+                    if (identity != null)
                     {
-                        otherPeers.Remove(peer);
+                        identity.MapperPeer = null;
 
-                        if (cachedIdentities.TryGetValue(peer, out var identity))
+                        foreach (var otherPeer in session.ConnectedClients)
                         {
-                            foreach (var otherPeer in otherPeers)
-                            {
-                                SendPacketFrom(identity, otherPeer, PacketId.MapperDisconnect);
-                            }
+                            SendPacketFrom(identity, otherPeer, PacketId.MapperDisconnect);
                         }
                     }
+
+                    session.CachedPoses.Remove(peer);
+                    session.ClientsWaitingForMap.Remove(peer);
                 }
 
-                peerToRoomCode.Remove(peer);
+                connectedSessions.Remove(peer);
             }
         }
 
         private void EventBasedNetListener_NetworkLatencyUpdateEvent(NetPeer peer, int latency)
         {
-            if (peerToRoomCode.TryGetValue(peer, out var roomCode)
-                && roomCodeToSession.TryGetValue(roomCode, out var otherPeers)
-                && cachedIdentities.TryGetValue(peer, out var identity))
+            if (connectedSessions.TryGetValue(peer, out var session))
             {
-                foreach (var otherPeer in otherPeers)
+                var identity = session.Identities.Find(it => it.MapperPeer == peer);
+
+                if (identity != null)
                 {
-                    if (otherPeer != peer)
+                    foreach (var otherPeer in session.ConnectedClients)
                     {
-                        SendPacketFrom(identity, otherPeer, PacketId.MapperLatency, new MapperLatencyPacket(latency));
+                        if (otherPeer != peer)
+                        {
+                            SendPacketFrom(identity, otherPeer, PacketId.MapperLatency, new MapperLatencyPacket(latency));
+                        }
                     }
                 }
             }
@@ -250,6 +267,16 @@ namespace ChroMapTogether.UDP
 
             writer.Put(fromPeer.ConnectionId);
             writer.Put(rawPacketData);
+
+            toPeer.Send(writer, DeliveryMethod.ReliableOrdered);
+        }
+
+        public void SendPacketTo(NetPeer toPeer, PacketId packetId)
+        {
+            var writer = new NetDataWriter();
+
+            writer.Put(0);
+            writer.Put((byte)packetId);
 
             toPeer.Send(writer, DeliveryMethod.ReliableOrdered);
         }

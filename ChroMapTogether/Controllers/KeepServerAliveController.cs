@@ -30,7 +30,7 @@ namespace ChroMapTogether.Controllers
             if (server is null)
                 return NotFound();
 
-            server.expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
+            server.Expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
 
             return Ok();
         }

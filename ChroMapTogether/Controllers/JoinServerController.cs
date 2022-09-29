@@ -22,8 +22,8 @@ namespace ChroMapTogether.Controllers
                 ? NotFound()
                 : Ok(new JoinServerResponse
                 {
-                    ip = server.ip,
-                    port = server.port
+                    ip = server.Ip,
+                    port = server.Port
                 });
         }
     }
