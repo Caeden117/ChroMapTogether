@@ -31,7 +31,7 @@ No matter which solution you use, make sure the following ports are open:
 2. Start the container (`docker run --name ChroMapTogether ghcr.io/caeden117/chromaptogether:master`)
 
 ### Usage (.NET CLI)
-Ensure that you have the [.NET 5.0 SDK](https://dotnet.microsoft.com/download) installed
+Ensure that you have the [.NET 6.0 SDK](https://dotnet.microsoft.com/download) installed
 
 1. Clone the repo
 2. Restore NuGet packages: `dotnet restore ChroMapTogether.csproj`
