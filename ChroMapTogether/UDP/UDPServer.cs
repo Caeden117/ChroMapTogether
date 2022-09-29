@@ -66,7 +66,7 @@ namespace ChroMapTogether.UDP
                 session.Host ??= peer;
 
                 var identity = request.Data.Get<MapperIdentityPacket>();
-                identity.ConnectionId = session.ConnectedClients.Count;
+                identity.ConnectionId = session.Identities.Count;
                 identity.MapperPeer = peer;
 
                 // Send peer identities and poses to new user
