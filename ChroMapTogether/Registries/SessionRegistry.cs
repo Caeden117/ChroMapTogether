@@ -65,9 +65,12 @@ namespace ChroMapTogether.Registries
         {
             var expiredServers = sessions.FindAll(x => x.Expiry < e.SignalTime || x.ConnectedClients.Count == 0);
 
-            logger.Information("Removed {0} expired servers.", expiredServers.Count);
+            if (expiredServers.Count > 0)
+            {
+                logger.Information("Removed {0} expired servers.", expiredServers.Count);
 
-            expiredServers.ForEach(x => sessions.Remove(x));
+                expiredServers.ForEach(x => sessions.Remove(x));
+            }
         }
     }
 }
