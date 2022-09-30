@@ -31,21 +31,21 @@ namespace ChroMapTogether.Registries
             timer.Start();
         }
 
-        public void AddSession(Session server)
+        public void AddSession(Session session)
         {
-            server.Expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
-            sessions.RemoveAll(x => x.Ip == server.Ip && x.Port == server.Port);
-            sessions.Add(server);
+            session.Expiry = DateTime.Now.AddMinutes(config.Value.RoomExpiryPeriod);
+            sessions.RemoveAll(x => x.Ip == session.Ip && x.Port == session.Port);
+            sessions.Add(session);
 
-            logger.Information($"New server created at {server.Ip}:{server.Port}.");
+            logger.Information($"New session created.");
         }
 
-        public void DeleteSession(Session server)
+        public void DeleteSession(Session session)
         {
-            server.Close();
-            sessions.Remove(server);
+            session.Close();
+            sessions.Remove(session);
 
-            logger.Information("Server explicitly removed.");
+            logger.Information("Session explicitly removed.");
         }
 
         public Session? GetSession(string code) => sessions.Find(x => x.Code == code);
@@ -61,15 +61,15 @@ namespace ChroMapTogether.Registries
             return session != null;
         }
 
-        private void CheckForExpiredSessions(object sender, ElapsedEventArgs e)
+        private void CheckForExpiredSessions(object? sender, ElapsedEventArgs e)
         {
-            var expiredServers = sessions.FindAll(x => x.Expiry < e.SignalTime || x.ConnectedClients.Count == 0);
+            var expiredSessions = sessions.FindAll(x => x.Expiry < e.SignalTime || x.ConnectedClients.Count == 0);
 
-            if (expiredServers.Count > 0)
+            if (expiredSessions.Count > 0)
             {
-                logger.Information("Removed {0} expired servers.", expiredServers.Count);
+                logger.Information("Removed {0} expired sessions.", expiredSessions.Count);
 
-                expiredServers.ForEach(x => sessions.Remove(x));
+                expiredSessions.ForEach(x => sessions.Remove(x));
             }
         }
     }
