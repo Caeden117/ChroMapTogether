@@ -15,11 +15,20 @@ info:
     direct connections to work.
   contact:
     name: Caeden117
-  version: 1.0.0
+  version: 1.1.0
 paths:
   /CreateServer:
     post:
       summary: 'Creates a new room code for a ChroMapper United Mapping session.'
+      requestBody:
+        content:
+          'application/x-www-form-urlencoded':
+            schema:
+             type: object
+             properties:
+                appVersion: 
+                  description: The application version
+                  type: string
       responses:
         '200':
           description: |-
@@ -72,11 +81,15 @@ paths:
                   port:
                     type: number
                     description: Host port
+                  appVersion:
+                    type: string
+                    description: Host app version
               examples:
                 Default Response:
                   value:
                     ip: '127.0.0.1'
                     port: 6969
+                    appVersion: 0.9.0
         '404':
           description: No server with join code exists.
   /KeepServerAlive:

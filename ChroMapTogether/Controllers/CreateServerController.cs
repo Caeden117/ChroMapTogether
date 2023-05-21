@@ -1,5 +1,6 @@
-﻿using ChroMapTogether.Configuration;
+using ChroMapTogether.Configuration;
 using ChroMapTogether.Models;
+using ChroMapTogether.Models.Requests;
 using ChroMapTogether.Models.Responses;
 using ChroMapTogether.Providers;
 using ChroMapTogether.Registries;
@@ -26,14 +27,15 @@ namespace ChroMapTogether.Controllers
         }
 
         [HttpPost]
-        public ActionResult Post()
+        public ActionResult Post([FromForm] CreateSessionRequest request)
         {
             var session = new Session
             {
                 Guid = Guid.NewGuid(),
                 Ip = Request.HttpContext.Connection.RemoteIpAddress!.MapToIPv4().ToString(),
                 Port = 6969,
-                Code = codeProvider.Generate(config.Value.RoomCodeLength)
+                Code = codeProvider.Generate(config.Value.RoomCodeLength),
+                AppVersion = request.appVersion
             };
 
             sessionRegistry.AddSession(session);

@@ -61,11 +61,17 @@ namespace ChroMapTogether.UDP
                 && roomCode.Length == serverConfig.Value.RoomCodeLength
                 && sessionRegistry.TryGetSession(roomCode, out var session))
             {
+                var identity = request.Data.Get<MapperIdentityPacket>();
+
+                if (session.AppVersion != identity.AppVersion)
+                {
+                    request.Reject();
+                    return;
+                }
+
                 var peer = request.Accept();
 
                 session.Host ??= peer;
-
-                var identity = request.Data.Get<MapperIdentityPacket>();
                 identity.ConnectionId = session.Identities.Count;
                 identity.MapperPeer = peer;
 
@@ -239,7 +245,7 @@ namespace ChroMapTogether.UDP
         }
 
         public void WriteNet(NetLogLevel level, string str, params object[] args) => logger.Information(str, args);
-        
+
         public void SendPacketFrom(MapperIdentityPacket fromPeer, NetPeer toPeer, PacketId packetId)
         {
             var writer = new NetDataWriter();
