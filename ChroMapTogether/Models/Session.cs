@@ -12,6 +12,7 @@ namespace ChroMapTogether.Models
         public string Ip { get; set; } = string.Empty;
         public int Port { get; set; }
         public string Code { get; set; } = string.Empty;
+        public string AppVersion { get; set; } = string.Empty;
         public DateTime Expiry { get; set; } = DateTime.MaxValue;
 
         public NetPeer? Host { get; set; } = null;

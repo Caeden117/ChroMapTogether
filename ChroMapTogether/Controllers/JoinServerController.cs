@@ -23,7 +23,8 @@ namespace ChroMapTogether.Controllers
                 : Ok(new JoinSessionResponse
                 {
                     ip = server.Ip,
-                    port = server.Port
+                    port = server.Port,
+                    appVersion = server.AppVersion
                 });
         }
     }
